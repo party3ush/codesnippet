@@ -1,0 +1,28 @@
+class TransformerEncoderBlock(layers.Layer):
+    def __init__(self, embed_dim, dense_dim, num_heads, **kwargs):
+        super().__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.dense_dim = dense_dim
+        self.num_heads = num_heads
+        self.attention = layers.MultiHeadAttention(
+            num_heads=num_heads, key_dim=embed_dim, dropout=0.0
+        )
+        self.layernorm_1 = layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm_2 = layers.LayerNormalization(epsilon=1e-6)
+        self.dense = layers.Dense(embed_dim, activation="relu")
+
+    def call(self, x, training):
+        x = self.layernorm_1(x)
+        x = self.dense(x)
+
+        attention_output = self.attention(
+            query=x,
+            value=x,
+            key=x,
+            attention_mask=None,
+            training=training,
+        )
+        x = x + attention_output
+        x = self.layernorm_2(x)
+        x = tf.nn.relu(x)
+        return x
